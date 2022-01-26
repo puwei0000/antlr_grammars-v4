@@ -10,6 +10,7 @@ csharp
 dice
 erlang
 fortran77
+gdscript
 gff3
 golang
 haskell
@@ -35,17 +36,18 @@ powerbuilder
 python/python2
 python/python3
 python/python3alt
-python/python3-js
 python/python3-py
 python/python3-ts
 python/python3-without-actions
 python/tiny-python
 quakemap
+r
 rego
 restructuredtext
 rexx
 rust
 sql/plsql
+sql/postgresql
 sql/tsql
 stringtemplate
 swift-fin
@@ -57,7 +59,8 @@ thrift
 tinymud
 v
 vb6
-wat
+velocity
 webidl
+xpath/xpath20
 xpath/xpath31
 z
