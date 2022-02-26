@@ -15,6 +15,7 @@ csharp
 edif300
 fortran77
 gdscript
+golang
 guitartab
 haskell
 html
@@ -69,8 +70,8 @@ sieve
 smalltalk
 smtlibv2
 sparql
-sql/hive/v1
 sql/hive/v2
+sql/hive/v3
 sql/mysql
 sql/plsql
 sql/postgresql
@@ -91,6 +92,7 @@ turtle-doc
 url
 v
 velocity
+verilog/systemverilog
 verilog/verilog
 xpath/xpath1
 xpath/xpath20
