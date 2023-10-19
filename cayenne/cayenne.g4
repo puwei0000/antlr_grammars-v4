@@ -27,11 +27,13 @@
 
 grammar cayenne;
 
+file_: expr EOF ;
+
 expr:
 	'(' varid '::' type_ ')' '->' expr
 	| '\\' '(' varid '::' type_ ')' '->' expr
 	| expr expr
-	| 'data' (conid (type_)* '|')*
+	| 'data' (conid type_* '|')*
 	| conid '@' type_
 	| 'case' varid 'of' arm* '::' type_
 	| 'sig' sign*

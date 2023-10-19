@@ -27,7 +27,7 @@ options
    { tokenVocab = CqlLexer; }
 
 root
-   : cqls? MINUSMINUS? eof
+   : cqls? MINUSMINUS? EOF
    ;
 
 cqls
@@ -84,10 +84,6 @@ cql
 
 revoke
    : kwRevoke priviledge kwOn resource kwFrom role
-   ;
-
-listUsers
-   : kwList kwUsers
    ;
 
 listRoles
@@ -185,6 +181,7 @@ createFunction
 
 codeBlock
    : CODE_BLOCK
+   | STRING_LITERAL
    ;
 
 paramList
@@ -277,7 +274,6 @@ alterTable
 
 alterTableOperation
    : alterTableAdd
-   | alterTableDropColumns
    | alterTableDropColumns
    | alterTableDropCompactStorage
    | alterTableRename
@@ -594,10 +590,7 @@ assignmentList
    ;
 
 assignmentTuple
-   : syntaxBracketLr (
-         constant ((syntaxComma constant)* | (syntaxComma assignmentTuple)*) |
-         assignmentTuple (syntaxComma assignmentTuple)*
-     ) syntaxBracketRr
+   : syntaxBracketLr ( expression (syntaxComma expression)* ) syntaxBracketRr
    ;
 
 insert
@@ -650,6 +643,7 @@ expressionList
 
 expression
    : constant
+   | functionCall
    | assignmentMap
    | assignmentSet
    | assignmentList
@@ -730,6 +724,7 @@ relalationContainsKey
 functionCall
    : OBJECT_NAME '(' STAR ')'
    | OBJECT_NAME '(' functionArgs? ')'
+   | K_UUID '(' ')'
    ;
 
 functionArgs
@@ -877,6 +872,7 @@ param
 
 paramName
    : OBJECT_NAME
+   | K_INPUT
    ;
 
 kwAdd
@@ -1235,10 +1231,6 @@ kwUser
    : K_USER
    ;
 
-kwUsers
-   : K_USERS
-   ;
-
 kwUsing
    : K_USING
    ;
@@ -1261,10 +1253,6 @@ kwWith
 
 kwRevoke
    : K_REVOKE
-   ;
-
-eof
-   : EOF
    ;
 
 // BRACKETS

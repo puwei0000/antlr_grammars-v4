@@ -1,5 +1,6 @@
-
 grammar jvmBasic;
+
+options { caseInsensitive = true; }
 
 /*
 [The "BSD licence"]
@@ -34,7 +35,7 @@ prog
 
 // a line starts with an INT
 line
-   : (linenumber ((amprstmt (COLON amprstmt?)*) | (COMMENT | REM)))
+   : linenumber (amprstmt (COLON amprstmt?)* | COMMENT | REM)
    ;
 
 amperoper
@@ -46,12 +47,13 @@ linenumber
    ;
 
 amprstmt
-   : (amperoper? statement)
-   | (COMMENT | REM)
+   : amperoper? statement
+   | COMMENT
+   | REM
    ;
 
 statement
-   : (CLS | LOAD | SAVE | TRACE | NOTRACE | FLASH | INVERSE | GR | NORMAL | SHLOAD | CLEAR | RUN | STOP | TEXT | HOME | HGR | HGR2)
+   : CLS | LOAD | SAVE | TRACE | NOTRACE | FLASH | INVERSE | GR | NORMAL | SHLOAD | CLEAR | RUN | STOP | TEXT | HOME | HGR | HGR2
    | endstmt
    | returnstmt
    | restorestmt
@@ -127,12 +129,12 @@ variableassignment
    ;
 
 relop
-   : (GTE)
-   | (GT EQ)
-   | (EQ GT)
+   : GTE
+   | GT EQ
+   | EQ GT
    | LTE
-   | (LT EQ)
-   | (EQ LT)
+   | LT EQ
+   | EQ LT
    | neq
    | EQ
    | GT
@@ -367,7 +369,7 @@ func_
    | expfunc
    | logfunc
    | absfunc
-   | (LPAREN expression RPAREN)
+   | LPAREN expression RPAREN
    ;
 
 signExpression
@@ -387,12 +389,12 @@ addingExpression
    ;
 
 relationalExpression
-   : addingExpression ((relop) addingExpression)?
+   : addingExpression (relop addingExpression)?
    ;
 
 expression
    : func_
-   | (relationalExpression ((AND | OR) relationalExpression)*)
+   | relationalExpression ((AND | OR) relationalExpression)*
    ;
 
 // lists
@@ -405,7 +407,7 @@ varname
    ;
 
 varsuffix
-   : (DOLLAR | PERCENT)
+   : DOLLAR | PERCENT
    ;
 
 varlist
@@ -541,42 +543,42 @@ PERCENT
 
 
 RETURN
-   : 'RETURN' | 'return'
+   : 'RETURN'
    ;
 
 
 PRINT
-   : 'PRINT' | 'print'
+   : 'PRINT'
    ;
 
 
 GOTO
-   : 'GOTO' | 'goto'
+   : 'GOTO'
    ;
 
 
 GOSUB
-   : 'GOSUB' | 'gosub'
+   : 'GOSUB'
    ;
 
 
 IF
-   : 'IF' | 'if'
+   : 'IF'
    ;
 
 
 NEXT
-   : 'NEXT' | 'next'
+   : 'NEXT'
    ;
 
 
 THEN
-   : 'THEN' | 'then'
+   : 'THEN'
    ;
 
 
 REM
-   : 'REM' | 'rem'
+   : 'REM'
    ;
 
 
@@ -636,7 +638,7 @@ DIV
 
 
 CLEAR
-   : 'CLEAR' | 'clear'
+   : 'CLEAR'
    ;
 
 
@@ -666,22 +668,22 @@ COMMA
 
 
 LIST
-   : 'LIST' | 'list'
+   : 'LIST'
    ;
 
 
 RUN
-   : 'RUN' | 'run'
+   : 'RUN'
    ;
 
 
 END
-   : 'END' | 'end'
+   : 'END'
    ;
 
 
 LET
-   : 'LET' | 'let'
+   : 'LET'
    ;
 
 
@@ -691,22 +693,22 @@ EQ
 
 
 FOR
-   : 'FOR' | 'for'
+   : 'FOR'
    ;
 
 
 TO
-   : 'TO' | 'to'
+   : 'TO'
    ;
 
 
 STEP
-   : 'STEP' | 'step'
+   : 'STEP'
    ;
 
 
 INPUT
-   : 'INPUT' | 'input'
+   : 'INPUT'
    ;
 
 
@@ -716,12 +718,12 @@ SEMICOLON
 
 
 DIM
-   : 'DIM' | 'dim'
+   : 'DIM'
    ;
 
 
 SQR
-   : 'SQR' | 'sqr'
+   : 'SQR'
    ;
 
 
@@ -731,42 +733,42 @@ COLON
 
 
 TEXT
-   : 'TEXT' | 'text'
+   : 'TEXT'
    ;
 
 
 HGR
-   : 'HGR' | 'hgr'
+   : 'HGR'
    ;
 
 
 HGR2
-   : 'HGR2' | 'hgr2'
+   : 'HGR2'
    ;
 
 
 LEN
-   : 'LEN' | 'len'
+   : 'LEN'
    ;
 
 
 CALL
-   : 'CALL' | 'call'
+   : 'CALL'
    ;
 
 
 ASC
-   : 'ASC' | 'asc'
+   : 'ASC'
    ;
 
 
 HPLOT
-   : 'HPLOT' | 'hplot'
+   : 'HPLOT'
    ;
 
 
 VPLOT
-   : 'VPLOT' | 'vplot'
+   : 'VPLOT'
    ;
 
 
@@ -781,282 +783,282 @@ INNUMBER
 
 
 VTAB
-   : 'VTAB' | 'vtab'
+   : 'VTAB'
    ;
 
 
 HTAB
-   : 'HTAB' | 'htab'
+   : 'HTAB'
    ;
 
 
 HOME
-   : 'HOME' | 'home'
+   : 'HOME'
    ;
 
 
 ON
-   : 'ON' | 'on'
+   : 'ON'
    ;
 
 
 PDL
-   : 'PDL' | 'pdl'
+   : 'PDL'
    ;
 
 
 PLOT
-   : 'PLOT' | 'plot'
+   : 'PLOT'
    ;
 
 
 PEEK
-   : 'PEEK' | 'peek'
+   : 'PEEK'
    ;
 
 
 POKE
-   : 'POKE' | 'poke'
+   : 'POKE'
    ;
 
 
 INTF
-   : 'INT' | 'int'
+   : 'INT'
    ;
 
 
 STOP
-   : 'STOP' | 'stop'
+   : 'STOP'
    ;
 
 
 HIMEM
-   : 'HIMEM' | 'himem'
+   : 'HIMEM'
    ;
 
 
 LOMEM
-   : 'LOMEM' | 'lomem'
+   : 'LOMEM'
    ;
 
 
 FLASH
-   : 'FLASH' | 'flash'
+   : 'FLASH'
    ;
 
 
 INVERSE
-   : 'INVERSE' | 'inverse'
+   : 'INVERSE'
    ;
 
 
 NORMAL
-   : 'NORMAL' | 'normal'
+   : 'NORMAL'
    ;
 
 
 ONERR
-   : 'ONERR' | 'onerr'
+   : 'ONERR'
    ;
 
 
 SPC
-   : 'SPC' | 'spc'
+   : 'SPC'
    ;
 
 
 FRE
-   : 'FRE' | 'fre'
+   : 'FRE'
    ;
 
 
 POS
-   : 'POS' | 'pos'
+   : 'POS'
    ;
 
 
 USR
-   : 'USR' | 'usr'
+   : 'USR'
    ;
 
 
 TRACE
-   : 'TRACE' | 'trace'
+   : 'TRACE'
    ;
 
 
 NOTRACE
-   : 'NOTRACE' | 'notrace'
+   : 'NOTRACE'
    ;
 
 
 AND
-   : 'AND' | 'and'
+   : 'AND'
    ;
 
 
 OR
-   : 'OR' | 'or'
+   : 'OR'
    ;
 
 
 DATA
-   : 'DATA' | 'data'
+   : 'DATA'
    ;
 
 
 WAIT
-   : 'WAIT' | 'wait'
+   : 'WAIT'
    ;
 
 
 READ
-   : 'READ' | 'read'
+   : 'READ'
    ;
 
 
 XDRAW
-   : 'XDRAW' | 'xdraw'
+   : 'XDRAW'
    ;
 
 
 DRAW
-   : 'DRAW' | 'draw'
+   : 'DRAW'
    ;
 
 
 AT
-   : 'AT' | 'at'
+   : 'AT'
    ;
 
 
 DEF
-   : 'DEF' | 'def'
+   : 'DEF'
    ;
 
 
 FN
-   : 'FN' | 'fn'
+   : 'FN'
    ;
 
 
 VAL
-   : 'VAL' | 'val'
+   : 'VAL'
    ;
 
 
 TAB
-   : 'TAB' | 'tab'
+   : 'TAB'
    ;
 
 
 SPEED
-   : 'SPEED' | 'speed'
+   : 'SPEED'
    ;
 
 
 ROT
-   : 'ROT' | 'rot'
+   : 'ROT'
    ;
 
 
 SCALE
-   : 'SCALE' | 'scale'
+   : 'SCALE'
    ;
 
 
 COLOR
-   : 'COLOR' | 'color'
+   : 'COLOR'
    ;
 
 
 HCOLOR
-   : 'HCOLOR' | 'hcolor'
+   : 'HCOLOR'
    ;
 
 
 HLIN
-   : 'HLIN' | 'hlin'
+   : 'HLIN'
    ;
 
 
 VLIN
-   : 'VLIN' | 'vlin'
+   : 'VLIN'
    ;
 
 
 SCRN
-   : 'SCRN' | 'scrn'
+   : 'SCRN'
    ;
 
 
 POP
-   : 'POP' | 'pop'
+   : 'POP'
    ;
 
 
 SHLOAD
-   : 'SHLOAD' | 'shload'
+   : 'SHLOAD'
    ;
 
 
 SIN
-   : 'SIN' | 'sin'
+   : 'SIN'
    ;
 
 
 COS
-   : 'COS' | 'cos'
+   : 'COS'
    ;
 
 
 TAN
-   : 'TAN' | 'tan'
+   : 'TAN'
    ;
 
 
 ATN
-   : 'ATN' | 'atn'
+   : 'ATN'
    ;
 
 
 RND
-   : 'RND' | 'rnd'
+   : 'RND'
    ;
 
 
 SGN
-   : 'SGN' | 'sgn'
+   : 'SGN'
    ;
 
 
 EXP
-   : 'EXP' | 'exp'
+   : 'EXP'
    ;
 
 
 LOG
-   : 'LOG' | 'log'
+   : 'LOG'
    ;
 
 
 ABS
-   : 'ABS' | 'abs'
+   : 'ABS'
    ;
 
 
 STORE
-   : 'STORE' | 'store'
+   : 'STORE'
    ;
 
 
 RECALL
-   : 'RECALL' | 'recall'
+   : 'RECALL'
    ;
 
 
 GET
-   : 'GET' | 'get'
+   : 'GET'
    ;
 
 
@@ -1071,27 +1073,27 @@ AMPERSAND
 
 
 GR
-   : 'GR' | 'gr'
+   : 'GR'
    ;
 
 
 NOT
-   : 'NOT' | 'not'
+   : 'NOT'
    ;
 
 
 RESTORE
-   : 'RESTORE' | 'restore'
+   : 'RESTORE'
    ;
 
 
 SAVE
-   : 'SAVE' | 'save'
+   : 'SAVE'
    ;
 
 
 LOAD
-   : 'LOAD' | 'load'
+   : 'LOAD'
    ;
 
 
@@ -1101,12 +1103,12 @@ QUESTION
 
 
 INCLUDE
-   : 'INCLUDE' | 'include'
+   : 'INCLUDE'
    ;
 
 
 CLS
-   : 'CLS' | 'cls'
+   : 'CLS'
    ;
 
 
@@ -1121,17 +1123,17 @@ STRINGLITERAL
 
 
 LETTERS
-   : ('a' .. 'z' | 'A' .. 'Z') +
+   : ('A' .. 'Z') +
    ;
 
 
 NUMBER
-   : ('0' .. '9') + (('e' | 'E') NUMBER)*
+   : ('0' .. '9') + ('E' NUMBER)*
    ;
 
 
 FLOAT
-   : ('0' .. '9')* '.' ('0' .. '9') + (('e' | 'E') ('0' .. '9') +)*
+   : ('0' .. '9')* '.' ('0' .. '9') + ('E' ('0' .. '9') +)*
    ;
 
 

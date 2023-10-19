@@ -351,6 +351,13 @@ class Records {
 
     }
 
+    static record R0(int x) {
+        R0 {
+            if (x > 3) throw Exception("new", null);
+            x *= 3;
+        }
+    }
+
     final record R1(@Dummy2 @Dummy int x) {
 
         R1(int x) {
@@ -636,4 +643,23 @@ class Yield {
     int yield(int yield){
         return yield;
     }
+}
+
+
+class IF_PERMITS {
+    final class T1 implements I1 {
+
+    }
+
+    final class T2 implements I1 {
+
+    }
+
+    interface I2 {
+    }
+
+    sealed interface I1 extends I2 permits T1, T2 {
+
+    }
+
 }

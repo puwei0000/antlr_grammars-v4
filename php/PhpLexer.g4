@@ -30,7 +30,10 @@ channels { PhpComments, ErrorLexem, SkipChannel }
 
 options {
     superClass=PhpLexerBase;
+    caseInsensitive = true;
 }
+
+// Insert here @header for C++ lexer.
 
 SeaWhitespace:  [ \t\r\n]+ -> channel(HIDDEN);
 HtmlText:       ~[<#]+;
@@ -140,6 +143,7 @@ Echo:               'echo';
 Else:               'else';
 ElseIf:             'elseif';
 Empty:              'empty';
+Enum_:              'enum';
 
 EndDeclare:         'enddeclare';
 EndFor:             'endfor';
@@ -176,7 +180,7 @@ List:               'list';
 LogicalAnd:         'and';
 LogicalOr:          'or';
 LogicalXor:         'xor';
-Match:              'match';
+Match_:             'match';
 Namespace:          'namespace';
 New:                'new';
 Null:               'null';
@@ -187,6 +191,7 @@ Print:              'print';
 Private:            'private';
 Protected:          'protected';
 Public:             'public';
+Readonly:           'readonly';
 Require:            'require';
 RequireOnce:        'require_once';
 Resource:           'resource';
@@ -207,6 +212,9 @@ While:              'while';
 Yield:              'yield';
 From:               'from';
 LambdaFn:           'fn';
+Ticks:              'ticks';
+Encoding:           'encoding';
+StrictTypes:        'strict_types';
 
 Get:                '__get';
 Set:                '__set';
@@ -303,12 +311,12 @@ BackQuote:          '`';
 
 VarName:            '$' NameString;
 Label:              [a-z_][a-z_0-9]*;
-Octal:              '0' [0-7]+;
-Decimal:            '0' | NonZeroDigit Digit*;
-Real:               (Digit+ '.' Digit* | '.' Digit+) ExponentPart?
-    |               Digit+ ExponentPart;
-Hex:                '0x' HexDigit+;
-Binary:             '0b' [01_]+;
+Octal:              '0' 'o'? OctalDigit+ ('_' OctalDigit+)*;
+Decimal:            '0' | NonZeroDigit Digit* ('_' Digit+)*;
+Real:               (LNum '.' LNum? | LNum? '.' LNum ) ExponentPart?
+    |               LNum+ ExponentPart;
+Hex:                '0x' HexDigit+ ('_' HexDigit+)*;
+Binary:             '0b' [01]+ ('_' [01]+)*;
 
 BackQuoteString:   '`' ~'`'* '`';
 SingleQuoteString: '\'' (~('\'' | '\\') | '\\' . )* '\'';
@@ -330,7 +338,7 @@ CurlyDollar:                '{' { this.IsCurlyDollar(1) }? { this.SetInsideStrin
 CurlyString:                '{'                                                 -> type(StringPart);
 EscapedChar:                '\\' .                                              -> type(StringPart);
 DoubleQuoteInInterpolation: '"'                                                 -> type(DoubleQuote), popMode;
-UnicodeEscape:              '\\u{' [a-zA-Z0-9][a-zA-Z0-9]+ '}';
+UnicodeEscape:              '\\u{' [a-z0-9][a-z0-9]+ '}';
 StringPart:                 ~[${\\"]+;
 
 mode SingleLineCommentMode;
@@ -349,8 +357,8 @@ HereDocText: ~[\r\n]*? ('\r'? '\n' | '\r');
 // '<?= "Hello world"; ?>' will be transformed to '<?php echo "Hello world"; ?>'
 fragment PhpStartEchoFragment: '<' ('?' '=' | { this.HasAspTags() }? '%' '=');
 fragment PhpStartFragment:     '<' ('?' 'php'? | { this.HasAspTags() }? '%');
-fragment NameString: [a-zA-Z_\u0080-\ufffe][a-zA-Z0-9_\u0080-\ufffe]*;
-fragment HtmlNameChar
+fragment NameString options { caseInsensitive = false; }: [a-zA-Z_\u0080-\ufffe][a-zA-Z0-9_\u0080-\ufffe]*;
+fragment HtmlNameChar options { caseInsensitive = false; }
     : HtmlNameStartChar
     | '-'
     | '_'
@@ -360,15 +368,17 @@ fragment HtmlNameChar
     | '\u0300'..'\u036F'
     | '\u203F'..'\u2040'
     ;
-fragment HtmlNameStartChar
-    : [:a-z]
+fragment HtmlNameStartChar options { caseInsensitive = false; }
+    : [:a-zA-Z]
     | '\u2070'..'\u218F'
     | '\u2C00'..'\u2FEF'
     | '\u3001'..'\uD7FF'
     | '\uF900'..'\uFDCF'
     | '\uFDF0'..'\uFFFD'
     ;
-fragment ExponentPart:         'e' [+-]? Digit+;
-fragment NonZeroDigit:         [1-9_];
-fragment Digit:                [0-9_];
-fragment HexDigit:             [a-f0-9_];
+fragment LNum:                 Digit+ ('_' Digit+)*;
+fragment ExponentPart:         'e' [+-]? LNum;
+fragment NonZeroDigit:         [1-9];
+fragment Digit:                [0-9];
+fragment OctalDigit:           [0-7];
+fragment HexDigit:             [a-f0-9];

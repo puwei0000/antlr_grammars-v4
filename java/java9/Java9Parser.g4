@@ -250,12 +250,11 @@ ambiguousName
  */
 
 compilationUnit
-	:	ordinaryCompilation
-	|	modularCompilation
+	: ( ordinaryCompilation | modularCompilation ) EOF
 	;
 
 ordinaryCompilation
-	:	packageDeclaration? importDeclaration* typeDeclaration* EOF
+	:	packageDeclaration? importDeclaration* typeDeclaration*
 	;
 
 modularCompilation
@@ -1023,8 +1022,7 @@ primary
 	:	(	primaryNoNewArray_lfno_primary
 		|	arrayCreationExpression
 		)
-		(	primaryNoNewArray_lf_primary
-		)*
+		primaryNoNewArray_lf_primary*
 	;
 
 primaryNoNewArray
@@ -1164,8 +1162,7 @@ arrayAccess
 	;
 
 arrayAccess_lf_primary
-	:	(	primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary '[' expression ']'
-		)
+	:	primaryNoNewArray_lf_primary_lfno_arrayAccess_lf_primary '[' expression ']'
 		(	primaryNoNewArray_lf_primary_lf_arrayAccess_lf_primary '[' expression ']'
 		)*
 	;

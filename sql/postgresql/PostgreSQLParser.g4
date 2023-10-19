@@ -126,6 +126,7 @@ stmt
    | importforeignschemastmt
    | indexstmt
    | insertstmt
+   | mergestmt
    | listenstmt
    | refreshmatviewstmt
    | loadstmt
@@ -273,7 +274,7 @@ set_rest_more
    : generic_set
    | var_name FROM CURRENT_P
    | TIME ZONE zone_value
-   | CATALOG_P sconst
+   | CATALOG sconst
    | SCHEMA sconst
    | NAMES opt_encoding
    | ROLE nonreservedword_or_sconst
@@ -671,9 +672,9 @@ typedtableelementlist
    ;
 
 tableelement
-   : columnDef
+   : tableconstraint
    | tablelikeclause
-   | tableconstraint
+   | columnDef
    ;
 
 typedtableelement
@@ -1578,7 +1579,7 @@ any_name
    ;
 
 attrs
-   :DOT attr_name+
+   :(DOT attr_name)+
    ;
 
 type_name_list
@@ -1918,6 +1919,9 @@ arg_class
 
 param_name
    : type_function_name
+   | builtin_function_name
+   | LEFT
+   | RIGHT
    ;
 
 func_return
@@ -1926,8 +1930,7 @@ func_return
 
 func_type
    : typename
-   | type_function_name attrs PERCENT TYPE_P
-   | SETOF type_function_name attrs PERCENT TYPE_P
+   | SETOF? (builtin_function_name | type_function_name | LEFT | RIGHT) attrs PERCENT TYPE_P
    ;
 
 func_arg_with_default
@@ -2131,6 +2134,9 @@ reindexstmt
 reindex_target_type
    : INDEX
    | TABLE
+   | SCHEMA
+   | DATABASE
+   | SYSTEM_P
    ;
 
 reindex_target_multitable
@@ -2145,6 +2151,8 @@ reindex_option_list
 
 reindex_option_elem
    : VERBOSE
+   | TABLESPACE
+   | CONCURRENTLY
    ;
 
 altertblspcstmt
@@ -2781,6 +2789,24 @@ returning_clause
    |
    ;
 
+// https://www.postgresql.org/docs/current/sql-merge.html
+mergestmt
+   : MERGE INTO? qualified_name alias_clause? USING (select_with_parens|qualified_name) alias_clause? ON a_expr
+        (merge_insert_clause merge_update_clause? | merge_update_clause merge_insert_clause?) merge_delete_clause?
+   ;
+
+merge_insert_clause
+   : WHEN NOT MATCHED (AND a_expr)? THEN? INSERT (OPEN_PAREN insert_column_list CLOSE_PAREN)? values_clause
+   ;
+
+merge_update_clause
+   : WHEN MATCHED (AND a_expr)? THEN? UPDATE SET set_clause_list
+   ;
+
+merge_delete_clause
+   : WHEN MATCHED THEN? DELETE_P
+   ;
+
 deletestmt
    : opt_with_clause DELETE_P FROM relation_expr_opt_alias using_clause where_or_current_clause returning_clause
    ;
@@ -2881,11 +2907,14 @@ select_no_parens
    ;
 
 select_clause
-   : simple_select
-   | select_with_parens
+   : simple_select_intersect ((UNION | EXCEPT) all_or_distinct simple_select_intersect)*
    ;
 
-simple_select
+simple_select_intersect
+    : simple_select_pramary (INTERSECT all_or_distinct simple_select_pramary)*
+    ;
+
+simple_select_pramary
    : ( SELECT (opt_all_clause into_clause opt_target_list | distinct_clause target_list)
            into_clause
            from_clause
@@ -2893,21 +2922,10 @@ simple_select
            group_clause
            having_clause
            window_clause
-       | values_clause
-       | TABLE relation_expr
-       | select_with_parens set_operator_with_all_or_distinct (simple_select | select_with_parens)
-     )
-        (set_operator_with_all_or_distinct (simple_select | select_with_parens))*
-   ;
-
-set_operator
-   : UNION # union
-   | INTERSECT # intersect
-   | EXCEPT # except
-   ;
-
-set_operator_with_all_or_distinct
-   : set_operator all_or_distinct
+    )
+   | values_clause
+   | TABLE relation_expr
+   | select_with_parens
    ;
 
 with_clause
@@ -3111,7 +3129,12 @@ from_clause
    ;
 
 from_list
-   : table_ref (COMMA table_ref)*
+   : non_ansi_join
+   | table_ref (COMMA table_ref)*
+   ;
+
+non_ansi_join
+   : table_ref (COMMA table_ref)+
    ;
 
 table_ref
@@ -3138,8 +3161,12 @@ alias_clause
    ;
 
 opt_alias_clause
-   : alias_clause
+   : table_alias_clause
    |
+   ;
+
+table_alias_clause
+   : AS? table_alias (OPEN_PAREN name_list CLOSE_PAREN)?
    ;
 
 func_alias_clause
@@ -3284,7 +3311,7 @@ consttypename
    ;
 
 generictype
-   : type_function_name attrs? opt_type_modifiers
+   : (builtin_function_name | type_function_name | LEFT | RIGHT) attrs? opt_type_modifiers
    ;
 
 opt_type_modifiers
@@ -3477,9 +3504,13 @@ a_expr_or
    ;
 /*16*/
 
-
 a_expr_and
-   : a_expr_in (AND a_expr_in)*
+   : a_expr_between (AND a_expr_between)*
+   ;
+/*21*/
+
+a_expr_between
+   : a_expr_in (NOT? BETWEEN SYMMETRIC? a_expr_in AND a_expr_in)?
    ;
 /*20*/
 
@@ -3523,7 +3554,7 @@ a_expr_compare
 
 
 a_expr_like
-   : a_expr_qual_op (NOT? (LIKE | ILIKE | SIMILAR TO | BETWEEN SYMMETRIC?) a_expr_qual_op opt_escape)?
+   : a_expr_qual_op (NOT? (LIKE | ILIKE | SIMILAR TO) a_expr_qual_op opt_escape)?
    ;
 /* 8*/
 
@@ -3921,7 +3952,6 @@ substr_list
    | a_expr FOR a_expr
    | a_expr SIMILAR a_expr ESCAPE a_expr
    | expr_list
-   |
    ;
 
 trim_list
@@ -4018,8 +4048,11 @@ file_name
    ;
 
 func_name
-   : type_function_name
+   : builtin_function_name
+   | type_function_name
    | colid indirection
+   | LEFT
+   | RIGHT
    ;
 
 aexprconst
@@ -4093,7 +4126,17 @@ colid
    | unreserved_keyword
    | col_name_keyword
    | plsql_unreserved_keyword
+   | LEFT
+   | RIGHT
    ;
+
+table_alias
+   : identifier
+   | unreserved_keyword
+   | col_name_keyword
+   | plsql_unreserved_keyword
+   ;
+
 
 type_function_name
    : identifier
@@ -4157,7 +4200,7 @@ unreserved_keyword
    | CALLED
    | CASCADE
    | CASCADED
-   | CATALOG_P
+   | CATALOG
    | CHAIN
    | CHARACTERISTICS
    | CHECKPOINT
@@ -4339,7 +4382,6 @@ unreserved_keyword
    | RELEASE
    | RENAME
    | REPEATABLE
-   | REPLACE
    | REPLICA
    | RESET
    | RESTART
@@ -4485,6 +4527,7 @@ col_name_keyword
    | XMLROOT
    | XMLSERIALIZE
    | XMLTABLE
+   | builtin_function_name
    ;
 
 type_func_name_keyword
@@ -4501,13 +4544,11 @@ type_func_name_keyword
    | IS
    | ISNULL
    | JOIN
-   | LEFT
    | LIKE
    | NATURAL
    | NOTNULL
    | OUTER_P
    | OVERLAPS
-   | RIGHT
    | SIMILAR
    | TABLESAMPLE
    | VERBOSE
@@ -4598,6 +4639,137 @@ from pl_gram.y, line ~2982
    | WHERE
    | WINDOW
    | WITH
+   ;
+
+builtin_function_name
+   : XMLCOMMENT
+   | XML_IS_WELL_FORMED
+   | XML_IS_WELL_FORMED_DOCUMENT
+   | XML_IS_WELL_FORMED_CONTENT
+   | XMLAGG
+   | XPATH
+   | XPATH_EXISTS
+   | ABS
+   | CBRT
+   | CEIL
+   | CEILING
+   | DEGREES
+   | DIV
+   | EXP
+   | FACTORIAL
+   | FLOOR
+   | GCD
+   | LCM
+   | LN
+   | LOG
+   | LOG10
+   | MIN_SCALE
+   | MOD
+   | PI
+   | POWER
+   | RADIANS
+   | ROUND
+   | SCALE
+   | SIGN
+   | SQRT
+   | TRIM_SCALE
+   | TRUNC
+   | WIDTH_BUCKET
+   | RANDOM
+   | SETSEED
+   | ACOS
+   | ACOSD
+   | ACOSH
+   | ASIN
+   | ASIND
+   | ASINH
+   | ATAN
+   | ATAND
+   | ATANH
+   | ATAN2
+   | ATAN2D
+   | COS
+   | COSD
+   | COSH
+   | COT
+   | COTD
+   | SIN
+   | SIND
+   | SINH
+   | TAN
+   | TAND
+   | TANH
+   | BIT_LENGTH
+   | CHAR_LENGTH
+   | CHARACTER_LENGTH
+   | LOWER
+   | OCTET_LENGTH
+   | OCTET_LENGTH
+   | UPPER
+   | ASCII
+   | BTRIM
+   | CHR
+   | CONCAT
+   | CONCAT_WS
+   | FORMAT
+   | INITCAP
+   | LENGTH
+   | LPAD
+   | LTRIM
+   | MD5
+   | PARSE_IDENT
+   | PG_CLIENT_ENCODING
+   | QUOTE_IDENT
+   | QUOTE_LITERAL
+   | QUOTE_NULLABLE
+   | REGEXP_COUNT
+   | REGEXP_INSTR
+   | REGEXP_LIKE
+   | REGEXP_MATCH
+   | REGEXP_MATCHES
+   | REGEXP_REPLACE
+   | REGEXP_SPLIT_TO_ARRAY
+   | REGEXP_SPLIT_TO_TABLE
+   | REGEXP_SUBSTR
+   | REPEAT
+   | REPLACE
+   | REVERSE
+   | RPAD
+   | RTRIM
+   | SPLIT_PART
+   | STARTS_WITH
+   | STRING_TO_ARRAY
+   | STRING_TO_TABLE
+   | STRPOS
+   | SUBSTR
+   | TO_ASCII
+   | TO_HEX
+   | TRANSLATE
+   | UNISTR
+   | AGE
+   | DATE_BIN
+   | DATE_PART
+   | DATE_TRUNC
+   | ISFINITE
+   | JUSTIFY_DAYS
+   | JUSTIFY_HOURS
+   | JUSTIFY_INTERVAL
+   | MAKE_DATE
+   | MAKE_INTERVAL
+   | MAKE_TIME
+   | MAKE_TIMESTAMP
+   | MAKE_TIMESTAMPTZ
+   | CLOCK_TIMESTAMP
+   | NOW
+   | STATEMENT_TIMESTAMP
+   | TIMEOFDAY
+   | TRANSACTION_TIMESTAMP
+   | TO_TIMESTAMP
+   | JUSTIFY_INTERVAL
+   | JUSTIFY_INTERVAL
+   | TO_CHAR
+   | TO_DATE
+   | TO_NUMBER
    ;
 
 /************************************************************************************************************************************************************/
@@ -5247,7 +5419,6 @@ plsql_unreserved_keyword
    | INSERT
    | IS
    | LAST_P
-   | LOG
    //| MESSAGE
 
    //| MESSAGE_TEXT
@@ -5275,7 +5446,6 @@ plsql_unreserved_keyword
    | RESET
    | RETURN
    //| RETURNED_SQLSTATE
-   | REVERSE
    | ROLLBACK
    //| ROW_COUNT
    | ROWTYPE
@@ -5324,4 +5494,3 @@ opt_returning_clause_into
    : INTO opt_strict into_target
    |
    ;
-
